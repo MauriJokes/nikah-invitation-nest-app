@@ -7,7 +7,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
 
-  // CORS
   app.enableCors({
     origin: [
       config.get<string>('CORS_ORIGIN', 'http://localhost:5173'),
@@ -17,7 +16,6 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type'],
   });
 
-  // Global validation pipe — strips unknown fields, validates DTOs
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -26,8 +24,10 @@ async function bootstrap() {
     }),
   );
 
-  const port = config.get<number>('PORT', 3000);
-  await app.listen(port);
-  console.log(`Server running on http://localhost:${port}`);
+  const port = process.env.PORT || 3000;
+
+  await app.listen(port, '0.0.0.0');
+
+  console.log(`Server running on port ${port}`);
 }
 bootstrap();
