@@ -15,6 +15,10 @@ export class GreetingService {
   }
 
   async findAll(): Promise<GreetingDocument[]> {
-    return this.greetingModel.find().sort({ createdAt: -1 }).limit(10).exec();
+    return this.greetingModel
+      .find({ isAnonymous: false })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .exec();
   }
 }

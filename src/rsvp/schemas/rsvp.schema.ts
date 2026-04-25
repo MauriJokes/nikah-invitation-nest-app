@@ -16,6 +16,9 @@ export class Rsvp {
 
   @Prop({ trim: true })
   message?: string;
+
+  @Prop({ trim: true })
+  isAnonymous?: boolean;
 }
 
 export const RsvpSchema = SchemaFactory.createForClass(Rsvp);

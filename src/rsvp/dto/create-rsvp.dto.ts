@@ -1,4 +1,12 @@
-import { IsEnum, IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 export class CreateRsvpDto {
   @IsString()
@@ -15,4 +23,8 @@ export class CreateRsvpDto {
   @IsOptional()
   @IsString()
   message?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isAnonymous?: boolean;
 }

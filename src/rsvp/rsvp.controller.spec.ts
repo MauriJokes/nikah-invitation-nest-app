@@ -40,6 +40,23 @@ describe('RsvpController', () => {
       expect(mockRsvpService.create).toHaveBeenCalledWith(dto);
       expect(result).toEqual(expected);
     });
+
+    it('should call rsvpService.create with anonymous dto and return the result', async () => {
+      const dto: CreateRsvpDto = {
+        name: 'Ahmad',
+        guests: 1,
+        attendance: 'yes',
+        message: 'Congratulations!',
+        isAnonymous: true,
+      };
+      const expected = { _id: 'xyz', ...dto, createdAt: new Date() };
+      mockRsvpService.create.mockResolvedValue(expected);
+
+      const result = await controller.create(dto);
+
+      expect(mockRsvpService.create).toHaveBeenCalledWith(dto);
+      expect(result).toEqual(expected);
+    });
   });
 
   describe('findAll', () => {

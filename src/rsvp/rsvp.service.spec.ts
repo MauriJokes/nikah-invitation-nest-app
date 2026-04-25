@@ -68,7 +68,13 @@ describe('RsvpService', () => {
       expect(mockRsvpModel.db.startSession).toHaveBeenCalled();
       expect(mockSession.startTransaction).toHaveBeenCalled();
       expect(mockGreetingModel.create).toHaveBeenCalledWith(
-        [{ name: dto.name, message: dto.message }],
+        [
+          {
+            name: dto.name,
+            message: dto.message,
+            isAnonymous: dto.isAnonymous,
+          },
+        ],
         { session: mockSession },
       );
       expect(mockRsvpModel.create).toHaveBeenCalledWith([dto], {
@@ -116,10 +122,50 @@ describe('RsvpService', () => {
       expect(mockRsvpModel.create).toHaveBeenCalledWith(dto);
       expect(result).toEqual(expected);
     });
+
+    it('should run a transaction and write greeting with isAnonymous when isAnonymous is true and message is present', async () => {
+      const dto: CreateRsvpDto = {
+        name: 'Ahmad',
+        guests: 1,
+        attendance: 'yes',
+        message: 'Congratulations!',
+        isAnonymous: true,
+      };
+      const expected = mockRsvp({
+        name: 'Ahmad',
+        guests: 1,
+        attendance: 'yes',
+        message: 'Congratulations!',
+        isAnonymous: true,
+      });
+      mockRsvpModel.create.mockResolvedValue([expected]);
+      mockGreetingModel.create.mockResolvedValue([]);
+
+      const result = await service.create(dto);
+
+      expect(mockRsvpModel.db.startSession).toHaveBeenCalled();
+      expect(mockSession.startTransaction).toHaveBeenCalled();
+      expect(mockGreetingModel.create).toHaveBeenCalledWith(
+        [
+          {
+            name: dto.name,
+            message: dto.message,
+            isAnonymous: dto.isAnonymous,
+          },
+        ],
+        { session: mockSession },
+      );
+      expect(mockRsvpModel.create).toHaveBeenCalledWith([dto], {
+        session: mockSession,
+      });
+      expect(mockSession.commitTransaction).toHaveBeenCalled();
+      expect(mockSession.endSession).toHaveBeenCalled();
+      expect(result).toEqual(expected);
+    });
   });
 
   describe('findAll', () => {
-    it('should return all RSVPs sorted newest first', async () => {
+    it('should return all non-anonymous RSVPs sorted newest first', async () => {
       const rsvps = [mockRsvp(), mockRsvp({ name: 'Other' })];
       mockRsvpModel.find.mockReturnValue({
         sort: jest.fn().mockReturnValue({
@@ -129,12 +175,14 @@ describe('RsvpService', () => {
 
       const result = await service.findAll();
 
-      expect(mockRsvpModel.find).toHaveBeenCalled();
+      expect(mockRsvpModel.find).toHaveBeenCalledWith({
+        isAnonymous: { $ne: true },
+      });
       expect(result).toEqual(rsvps);
       expect(result).toHaveLength(2);
     });
 
-    it('should return an empty array when no RSVPs exist', async () => {
+    it('should exclude anonymous RSVPs from results', async () => {
       mockRsvpModel.find.mockReturnValue({
         sort: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue([]),
@@ -142,6 +190,10 @@ describe('RsvpService', () => {
       });
 
       const result = await service.findAll();
+
+      expect(mockRsvpModel.find).toHaveBeenCalledWith({
+        isAnonymous: { $ne: true },
+      });
       expect(result).toEqual([]);
     });
   });

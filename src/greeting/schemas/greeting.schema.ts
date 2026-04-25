@@ -10,6 +10,9 @@ export class Greeting {
 
   @Prop({ required: true, trim: true })
   message!: string;
+
+  @Prop({ trim: true })
+  isAnonymous?: boolean;
 }
 
 export const GreetingSchema = SchemaFactory.createForClass(Greeting);
