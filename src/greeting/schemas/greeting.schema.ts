@@ -13,6 +13,9 @@ export class Greeting {
 
   @Prop({ trim: true })
   isAnonymous?: boolean;
+
+  @Prop({ required: true, trim: true })
+  colorIndex!: number;
 }
 
 export const GreetingSchema = SchemaFactory.createForClass(Greeting);

@@ -13,26 +13,32 @@ export class RsvpService {
   ) {}
 
   async create(dto: CreateRsvpDto): Promise<RsvpDocument> {
-    if (dto.message !== undefined) {
+    const { message, isAnonymous, ...rsvpData } = dto;
+
+    if (message !== undefined) {
       const session = await this.rsvpModel.db.startSession();
 
       try {
         session.startTransaction();
-        await this.greetingModel.create(
+        const [greeting] = await this.greetingModel.create(
           [
             {
               name: dto.name,
-              message: dto.message,
-              isAnonymous: dto.isAnonymous,
+              message,
+              isAnonymous,
+              colorIndex: dto.colorIndex,
             },
           ],
-          { session: session },
+          { session },
         );
-        const rsvp = await this.rsvpModel.create([dto], { session: session });
+        const [rsvp] = await this.rsvpModel.create(
+          [{ ...rsvpData, greetingId: greeting._id.toString() }],
+          { session },
+        );
 
         await session.commitTransaction();
 
-        return rsvp[0];
+        return rsvp;
       } catch (error) {
         await session.abortTransaction();
         throw error;
@@ -41,13 +47,10 @@ export class RsvpService {
       }
     }
 
-    return this.rsvpModel.create(dto);
+    return this.rsvpModel.create(rsvpData);
   }
 
   async findAll(): Promise<RsvpDocument[]> {
-    return this.rsvpModel
-      .find({ isAnonymous: { $ne: true } })
-      .sort({ createdAt: -1 })
-      .exec();
+    return this.rsvpModel.find().sort({ createdAt: -1 }).exec();
   }
 }

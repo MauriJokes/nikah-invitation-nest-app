@@ -11,7 +11,6 @@ const mockRsvp = (override: Partial<RsvpDocument> = {}): any => ({
   name: 'Siti Aminah',
   guests: 2,
   attendance: 'yes',
-  message: 'Looking forward to it!',
   createdAt: new Date('2026-12-01') as any,
   ...override,
 });
@@ -59,9 +58,11 @@ describe('RsvpService', () => {
         guests: 2,
         attendance: 'yes',
         message: 'Looking forward to it!',
+        colorIndex: 2,
       };
       const createdRsvp = mockRsvp();
       mockRsvpModel.create.mockResolvedValue([createdRsvp]);
+      mockGreetingModel.create.mockResolvedValue([{ _id: 'greeting-id' }]);
 
       const result = await service.create(dto);
 
@@ -73,13 +74,23 @@ describe('RsvpService', () => {
             name: dto.name,
             message: dto.message,
             isAnonymous: dto.isAnonymous,
+            colorIndex: dto.colorIndex,
           },
         ],
         { session: mockSession },
       );
-      expect(mockRsvpModel.create).toHaveBeenCalledWith([dto], {
-        session: mockSession,
-      });
+      expect(mockRsvpModel.create).toHaveBeenCalledWith(
+        [
+          {
+            name: dto.name,
+            guests: dto.guests,
+            attendance: dto.attendance,
+            colorIndex: dto.colorIndex,
+            greetingId: 'greeting-id',
+          },
+        ],
+        { session: mockSession },
+      );
       expect(mockSession.commitTransaction).toHaveBeenCalled();
       expect(mockSession.endSession).toHaveBeenCalled();
       expect(result).toEqual(createdRsvp);
@@ -111,7 +122,6 @@ describe('RsvpService', () => {
         name: 'Ahmad',
         guests: 1,
         attendance: 'no',
-        message: undefined,
       });
       mockRsvpModel.create.mockResolvedValue(expected);
 
@@ -130,16 +140,16 @@ describe('RsvpService', () => {
         attendance: 'yes',
         message: 'Congratulations!',
         isAnonymous: true,
+        colorIndex: 1,
       };
       const expected = mockRsvp({
         name: 'Ahmad',
         guests: 1,
         attendance: 'yes',
-        message: 'Congratulations!',
-        isAnonymous: true,
+        greetingId: 'greeting-id',
       });
       mockRsvpModel.create.mockResolvedValue([expected]);
-      mockGreetingModel.create.mockResolvedValue([]);
+      mockGreetingModel.create.mockResolvedValue([{ _id: 'greeting-id' }]);
 
       const result = await service.create(dto);
 
@@ -151,13 +161,23 @@ describe('RsvpService', () => {
             name: dto.name,
             message: dto.message,
             isAnonymous: dto.isAnonymous,
+            colorIndex: dto.colorIndex,
           },
         ],
         { session: mockSession },
       );
-      expect(mockRsvpModel.create).toHaveBeenCalledWith([dto], {
-        session: mockSession,
-      });
+      expect(mockRsvpModel.create).toHaveBeenCalledWith(
+        [
+          {
+            name: dto.name,
+            guests: dto.guests,
+            attendance: dto.attendance,
+            colorIndex: dto.colorIndex,
+            greetingId: 'greeting-id',
+          },
+        ],
+        { session: mockSession },
+      );
       expect(mockSession.commitTransaction).toHaveBeenCalled();
       expect(mockSession.endSession).toHaveBeenCalled();
       expect(result).toEqual(expected);
@@ -165,7 +185,7 @@ describe('RsvpService', () => {
   });
 
   describe('findAll', () => {
-    it('should return all non-anonymous RSVPs sorted newest first', async () => {
+    it('should return all RSVPs sorted newest first', async () => {
       const rsvps = [mockRsvp(), mockRsvp({ name: 'Other' })];
       mockRsvpModel.find.mockReturnValue({
         sort: jest.fn().mockReturnValue({
@@ -175,14 +195,12 @@ describe('RsvpService', () => {
 
       const result = await service.findAll();
 
-      expect(mockRsvpModel.find).toHaveBeenCalledWith({
-        isAnonymous: { $ne: true },
-      });
+      expect(mockRsvpModel.find).toHaveBeenCalledWith();
       expect(result).toEqual(rsvps);
       expect(result).toHaveLength(2);
     });
 
-    it('should exclude anonymous RSVPs from results', async () => {
+    it('should return empty array when no RSVPs exist', async () => {
       mockRsvpModel.find.mockReturnValue({
         sort: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue([]),
@@ -191,9 +209,7 @@ describe('RsvpService', () => {
 
       const result = await service.findAll();
 
-      expect(mockRsvpModel.find).toHaveBeenCalledWith({
-        isAnonymous: { $ne: true },
-      });
+      expect(mockRsvpModel.find).toHaveBeenCalledWith();
       expect(result).toEqual([]);
     });
   });

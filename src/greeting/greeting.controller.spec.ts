@@ -27,6 +27,7 @@ describe('GreetingController', () => {
       const dto: CreateGreetingDto = {
         name: 'Keluarga Jaludin',
         message: 'Tahniah! Semoga bahagia selalu.',
+        colorIndex: 3,
       };
       const expected = { _id: 'abc', ...dto, createdAt: new Date() };
       mockGreetingService.create.mockResolvedValue(expected);

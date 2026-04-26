@@ -9,6 +9,7 @@ const mockGreeting = (override: Partial<GreetingDocument> = {}): any => ({
   _id: 'greeting-id' as any,
   name: 'Keluarga Jaludin',
   message: 'Tahniah! Semoga bahagia selalu.',
+  colorIndex: 3,
   createdAt: new Date('2026-12-01') as any,
   ...override,
 });
@@ -41,6 +42,7 @@ describe('GreetingService', () => {
       const dto: CreateGreetingDto = {
         name: 'Keluarga Jaludin',
         message: 'Tahniah! Semoga bahagia selalu.',
+        colorIndex: 3,
       };
       const expected = mockGreeting();
       mockModel.create.mockResolvedValue(expected);

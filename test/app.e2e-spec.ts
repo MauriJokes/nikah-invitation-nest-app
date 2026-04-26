@@ -2,15 +2,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
+import { getConnectionToken } from '@nestjs/mongoose';
+import { Connection } from 'mongoose';
 import { AppModule } from './../src/app.module';
 
 describe('Wedding Invitation API (e2e)', () => {
   let app: INestApplication<App>;
-  let mongod: MongoMemoryServer;
+  let mongod: MongoMemoryReplSet;
 
   beforeAll(async () => {
-    mongod = await MongoMemoryServer.create();
+    mongod = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
     process.env.MONGODB_URI = mongod.getUri();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -22,6 +24,13 @@ describe('Wedding Invitation API (e2e)', () => {
       new ValidationPipe({ whitelist: true, transform: true }),
     );
     await app.init();
+
+    // Ensure collections exist before any transactional tests run
+    const conn = moduleFixture.get<Connection>(getConnectionToken());
+    await Promise.all([
+      conn.model('Rsvp').createCollection().catch(() => {}),
+      conn.model('Greeting').createCollection().catch(() => {}),
+    ]);
   });
 
   afterAll(async () => {
@@ -39,6 +48,7 @@ describe('Wedding Invitation API (e2e)', () => {
           guests: 2,
           attendance: 'yes',
           message: 'Looking forward to it!',
+          colorIndex: 2,
         })
         .expect(201);
 
@@ -46,8 +56,8 @@ describe('Wedding Invitation API (e2e)', () => {
         name: 'Siti Aminah',
         guests: 2,
         attendance: 'yes',
-        message: 'Looking forward to it!',
       });
+      expect(res.body.greetingId).toBeDefined();
       expect(res.body._id).toBeDefined();
       expect(res.body.createdAt).toBeDefined();
     });
@@ -109,12 +119,13 @@ describe('Wedding Invitation API (e2e)', () => {
     it('creates a greeting and returns 201 with the document', async () => {
       const res = await request(app.getHttpServer())
         .post('/api/greetings')
-        .send({ name: 'Keluarga Jaludin', message: 'Tahniah! Semoga bahagia.' })
+        .send({ name: 'Keluarga Jaludin', message: 'Tahniah! Semoga bahagia.', colorIndex: 1 })
         .expect(201);
 
       expect(res.body).toMatchObject({
         name: 'Keluarga Jaludin',
         message: 'Tahniah! Semoga bahagia.',
+        colorIndex: 1,
       });
       expect(res.body._id).toBeDefined();
       expect(res.body.createdAt).toBeDefined();
@@ -153,10 +164,10 @@ describe('Wedding Invitation API (e2e)', () => {
       // Add two more to guarantee ordering
       await request(app.getHttpServer())
         .post('/api/greetings')
-        .send({ name: 'First', message: 'First message' });
+        .send({ name: 'First', message: 'First message', colorIndex: 1 });
       await request(app.getHttpServer())
         .post('/api/greetings')
-        .send({ name: 'Second', message: 'Second message' });
+        .send({ name: 'Second', message: 'Second message', colorIndex: 2 });
 
       const res = await request(app.getHttpServer()).get('/api/greetings').expect(200);
       const dates = res.body.map((g: any) => new Date(g.createdAt).getTime());

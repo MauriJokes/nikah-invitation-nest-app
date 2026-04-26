@@ -15,10 +15,7 @@ export class Rsvp {
   attendance!: 'yes' | 'no';
 
   @Prop({ trim: true })
-  message?: string;
-
-  @Prop({ trim: true })
-  isAnonymous?: boolean;
+  greetingId?: string;
 }
 
 export const RsvpSchema = SchemaFactory.createForClass(Rsvp);

@@ -1,4 +1,11 @@
-import { IsBoolean, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 export class CreateGreetingDto {
   @IsString()
@@ -12,4 +19,7 @@ export class CreateGreetingDto {
   @IsOptional()
   @IsBoolean()
   isAnonymous?: boolean;
+
+  @IsNumber()
+  colorIndex!: number;
 }

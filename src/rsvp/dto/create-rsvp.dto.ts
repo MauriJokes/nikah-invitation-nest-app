@@ -2,6 +2,7 @@ import {
   IsBoolean,
   IsEnum,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Min,
@@ -27,4 +28,8 @@ export class CreateRsvpDto {
   @IsOptional()
   @IsBoolean()
   isAnonymous?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  colorIndex?: number;
 }

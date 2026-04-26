@@ -16,7 +16,7 @@ export class GreetingService {
 
   async findAll(): Promise<GreetingDocument[]> {
     return this.greetingModel
-      .find({ isAnonymous: false })
+      .find({ isAnonymous: { $ne: true } })
       .sort({ createdAt: -1 })
       .limit(10)
       .exec();
